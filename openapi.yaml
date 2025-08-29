@@ -1,0 +1,2162 @@
+openapi: 3.0.3
+info:
+  title: Planora API
+  version: 1.0.0
+  description: API для Planora Core, Scheduling, iSpring Integration, Reports, и Directory
+
+servers:
+  - url: https://api.planora.local/api
+
+tags:
+  - name: Users
+    description: Управление пользователями (Directory)
+  - name: Projects
+    description: Проекты и иерархия
+  - name: Boards
+    description: Доски (Kanban)
+  - name: Tasks
+    description: Задачи
+  - name: Comments
+    description: Комментарии к задачам
+  - name: Files
+    description: Файлы и presigned URL
+  - name: Activity
+    description: Лента активности
+  - name: Calendars
+    description: Календари
+  - name: Events
+    description: События, встречи, участники
+  - name: Rooms
+    description: Переговорные
+  - name: Booking
+    description: Бронирование комнат
+  - name: Availability
+    description: Поиск времени и занятость
+  - name: iSpring
+    description: Интеграция с iSpring
+  - name: DataSources
+    description: Источники данных для отчётов
+  - name: DataSets
+    description: Наборы данных
+  - name: Templates
+    description: Шаблоны отчётов
+  - name: Reports
+    description: Генерация отчётов
+  - name: Schedules
+    description: Расписания отчётов
+  - name: Groups
+    description: Группы пользователей
+  - name: OrgUnits
+    description: Организационные единицы
+  - name: Roles
+    description: Роли и права
+  - name: Avatars
+    description: Управление аватарами
+  - name: Import/Export
+    description: Импорт/экспорт пользователей
+
+paths:
+  /users:
+    get:
+      tags: [Users]
+      summary: Список/поиск пользователей
+      parameters:
+        - name: q
+          in: query
+          schema:
+            type: string
+            description: "Поиск по name/email/phone"
+        - name: email
+          in: query
+          schema:
+            type: string
+            format: email
+        - name: role
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, invited, suspended, deleted]
+        - name: orgUnitId
+          in: query
+          schema:
+            type: string
+        - name: managerId
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 200
+        - name: cursor
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPage'
+    post:
+      tags: [Users]
+      summary: Создать пользователя (инвайт/привязка к IdP)
+      description: "Создаёт профиль в Directory и инициирует приглашение/создание учётной записи в IdP (Keycloak)."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  /users/{userId}:
+    get:
+      tags: [Users]
+      summary: Получить пользователя
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+    patch:
+      tags: [Users]
+      summary: Обновить профиль пользователя
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserPatch'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+    delete:
+      tags: [Users]
+      summary: Деактивировать/удалить пользователя
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: No Content
+
+  /users/{userId}/avatar/presign:
+    post:
+      tags: [Avatars]
+      summary: Presigned URL для аватара
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FilePresignRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FilePresignResponse'
+
+  /projects:
+    get:
+      tags: [Projects]
+      summary: Список проектов
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Project'
+    post:
+      tags: [Projects]
+      summary: Создать проект
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+
+  /projects/{projectId}/boards:
+    get:
+      tags: [Boards]
+      summary: Список досок проекта
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Board'
+    post:
+      tags: [Boards]
+      summary: Создать доску
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BoardCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Board'
+
+  /boards/{boardId}/columns:
+    get:
+      tags: [Boards]
+      summary: Колонки доски
+      parameters:
+        - name: boardId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Column'
+    post:
+      tags: [Boards]
+      summary: Создать колонку
+      parameters:
+        - name: boardId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ColumnCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Column'
+
+  /columns/{columnId}:
+    patch:
+      tags: [Boards]
+      summary: Обновить колонку
+      parameters:
+        - name: columnId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ColumnPatch'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Column'
+
+  /tasks:
+    get:
+      tags: [Tasks]
+      summary: Список задач
+      parameters:
+        - name: projectId
+          in: query
+          schema:
+            type: string
+        - name: boardId
+          in: query
+          schema:
+            type: string
+        - name: columnId
+          in: query
+          schema:
+            type: string
+        - name: assigneeId
+          in: query
+          schema:
+            type: string
+        - name: dueFrom
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: dueTo
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: q
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+    post:
+      tags: [Tasks]
+      summary: Создать задачу
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+
+  /tasks/{taskId}:
+    patch:
+      tags: [Tasks]
+      summary: Обновить задачу
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskPatch'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+
+  /tasks/reorder:
+    patch:
+      tags: [Tasks]
+      summary: Изменить порядок задач
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskReorder'
+      responses:
+        '200':
+          description: OK
+
+  /tasks/{taskId}/comments:
+    get:
+      tags: [Comments]
+      summary: Комментарии к задаче
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Comment'
+    post:
+      tags: [Comments]
+      summary: Добавить комментарий
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+
+  /files/presign:
+    post:
+      tags: [Files]
+      summary: Presigned URL для загрузки
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FilePresignRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FilePresignResponse'
+
+  /activity:
+    get:
+      tags: [Activity]
+      summary: Лента активности
+      parameters:
+        - name: entityType
+          in: query
+          schema:
+            type: string
+        - name: entityId
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Activity'
+
+  /calendars/my:
+    get:
+      tags: [Calendars]
+      summary: Мои календари
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Calendar'
+
+  /events:
+    get:
+      tags: [Events]
+      summary: События диапазона
+      parameters:
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: calendarId
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CalendarEvent'
+    post:
+      tags: [Events]
+      summary: Создать событие
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalendarEvent'
+
+  /events/{eventId}:
+    patch:
+      tags: [Events]
+      summary: Обновить событие
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventPatch'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalendarEvent'
+    delete:
+      tags: [Events]
+      summary: Удалить событие
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: No Content
+
+  /events/{eventId}/attendees:
+    post:
+      tags: [Events]
+      summary: Добавить/обновить участников
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/AttendeeUpsert'
+      responses:
+        '200':
+          description: OK
+
+  /events/{eventId}/rsvp:
+    post:
+      tags: [Events]
+      summary: RSVP участника
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RsvpRequest'
+      responses:
+        '200':
+          description: OK
+
+  /rooms:
+    get:
+      tags: [Rooms]
+      summary: Список переговорных
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Room'
+    post:
+      tags: [Rooms]
+      summary: Создать переговорную
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoomCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Room'
+
+  /rooms/{roomId}/book:
+    post:
+      tags: [Booking]
+      summary: Забронировать переговорную
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingHoldRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingHoldResponse'
+
+  /rooms/confirm:
+    post:
+      tags: [Booking]
+      summary: Подтвердить бронь
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingConfirmRequest'
+      responses:
+        '200':
+          description: OK
+
+  /freebusy:
+    get:
+      tags: [Availability]
+      summary: Занятость пользователей
+      parameters:
+        - name: userIds
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: false
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FreeBusy'
+
+  /events/find-time:
+    post:
+      tags: [Availability]
+      summary: Поиск подходящего времени
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FindTimeRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TimeSlot'
+
+  /ispring/sessions:
+    get:
+      tags: [iSpring]
+      summary: Список/фильтр сессий оценок
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, active, closed]
+        - name: userId
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AssessmentSession'
+    post:
+      tags: [iSpring]
+      summary: Создать оценочную сессию (через iSpring)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssessmentCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssessmentSession'
+
+  /ispring/sync:
+    post:
+      tags: [iSpring]
+      summary: Ручной запуск синхронизации результатов
+      responses:
+        '202':
+          description: Accepted
+
+  /report-datasources:
+    get:
+      tags: [DataSources]
+      summary: Список источников данных
+      parameters:
+        - name: q
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DataSource'
+    post:
+      tags: [DataSources]
+      summary: Создать источник данных
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataSourceCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataSource'
+
+  /report-datasources/{id}:
+    get:
+      tags: [DataSources]
+      summary: Получить источник
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataSource'
+    patch:
+      tags: [DataSources]
+      summary: Обновить источник
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataSourcePatch'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataSource'
+    delete:
+      tags: [DataSources]
+      summary: Удалить источник
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: No Content
+
+  /report-datasources/{id}/test:
+    post:
+      tags: [DataSources]
+      summary: Проверить соединение/доступ
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+
+  /report-datasets:
+    get:
+      tags: [DataSets]
+      summary: Список датасетов
+      parameters:
+        - name: q
+          in: query
+          schema:
+            type: string
+        - name: dataSourceId
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DataSet'
+    post:
+      tags: [DataSets]
+      summary: Создать датасет
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataSetCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataSet'
+
+  /report-datasets/{id}:
+    get:
+      tags: [DataSets]
+      summary: Получить датасет
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataSet'
+    patch:
+      tags: [DataSets]
+      summary: Обновить датасет
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataSetPatch'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataSet'
+    delete:
+      tags: [DataSets]
+      summary: Удалить датасет
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: No Content
+
+  /report-datasets/{id}/preview:
+    post:
+      tags: [DataSets]
+      summary: Предпросмотр выборки (с параметрами)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataSetPreviewRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {}
+
+  /report-templates:
+    get:
+      tags: [Templates]
+      summary: Список шаблонов
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReportTemplate'
+    post:
+      tags: [Templates]
+      summary: Создать шаблон
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportTemplateCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportTemplate'
+
+  /report-templates/{id}:
+    get:
+      tags: [Templates]
+      summary: Получить шаблон
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportTemplate'
+    patch:
+      tags: [Templates]
+      summary: Обновить метаданные/биндинги шаблона
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportTemplatePatch'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportTemplate'
+    delete:
+      tags: [Templates]
+      summary: Удалить шаблон
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: No Content
+
+  /report-templates/{id}/versions:
+    post:
+      tags: [Templates]
+      summary: Загрузить новую версию файла шаблона
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                changeLog:
+                  type: string
+                  nullable: true
+              required: [file]
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateVersion'
+
+  /report-templates/{id}/preview:
+    post:
+      tags: [Templates]
+      summary: Предпросмотр рендера (PDF/XLS/DOCX)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportRenderRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+
+  /report-jobs:
+    get:
+      tags: [Reports]
+      summary: Список джобов отчётов
+      parameters:
+        - name: templateId
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [queued, running, done, failed]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReportJob'
+    post:
+      tags: [Reports]
+      summary: Запустить генерацию отчёта
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                templateId:
+                  type: string
+                params:
+                  type: object
+                  additionalProperties: true
+                format:
+                  type: string
+                  enum: [pdf, xlsx, docx, html, csv]
+                  default: pdf
+              required: [templateId]
+      responses:
+        '202':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportJob'
+
+  /report-jobs/{id}:
+    get:
+      tags: [Reports]
+      summary: Получить статус джоба
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportJob'
+
+  /report-jobs/{id}/download:
+    get:
+      tags: [Reports]
+      summary: Скачать отчёт
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: File
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+            application/vnd.openxmlformats-officedocument.wordprocessingml.document:
+              schema:
+                type: string
+                format: binary
+
+  /report-schedules:
+    get:
+      tags: [Schedules]
+      summary: Список расписаний
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReportSchedule'
+    post:
+      tags: [Schedules]
+      summary: Создать расписание
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportScheduleCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportSchedule'
+
+  /report-schedules/{id}:
+    patch:
+      tags: [Schedules]
+      summary: Обновить расписание
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportSchedulePatch'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportSchedule'
+    delete:
+      tags: [Schedules]
+      summary: Удалить расписание
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: No Content
+
+  /groups:
+    get:
+      tags: [Groups]
+      summary: Список групп
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Group'
+    post:
+      tags: [Groups]
+      summary: Создать группу
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+
+  /orgunits:
+    get:
+      tags: [OrgUnits]
+      summary: Список орг-единиц (дерево)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OrgUnit'
+    post:
+      tags: [OrgUnits]
+      summary: Создать орг-единицу
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrgUnitCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrgUnit'
+
+  /orgunits/{orgUnitId}:
+    get:
+      tags: [OrgUnits]
+      summary: Получить орг-единицу
+      parameters:
+        - name: orgUnitId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrgUnit'
+    patch:
+      tags: [OrgUnits]
+      summary: Обновить орг-единицу
+      parameters:
+        - name: orgUnitId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrgUnitPatch'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrgUnit'
+    delete:
+      tags: [OrgUnits]
+      summary: Удалить орг-единицу
+      parameters:
+        - name: orgUnitId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: No Content
+
+  /orgunits/{orgUnitId}/members:
+    get:
+      tags: [OrgUnits]
+      summary: Пользователи орг-единицы (рекурсивно)
+      parameters:
+        - name: orgUnitId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+                  total:
+                    type: integer
+
+  /users/import:
+    post:
+      tags: [Import/Export]
+      summary: Импорт пользователей (CSV/XLSX)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                dryRun:
+                  type: boolean
+                  default: true
+              required: [file]
+      responses:
+        '200':
+          description: Результат импорта
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  inserted:
+                    type: integer
+                  updated:
+                    type: integer
+                  errors:
+                    type: array
+                    items:
+                      type: string
+
+  /users/export:
+    get:
+      tags: [Import/Export]
+      summary: Экспорт пользователей (CSV/XLSX)
+      parameters:
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [csv, xlsx]
+            default: csv
+      responses:
+        '200':
+          description: File
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id: { type: string }
+        email: { type: string, format: email }
+        name: { type: string }
+        phone: { type: string, nullable: true }
+        locale: { type: string, default: "ru-RU" }
+        tz: { type: string, default: "Europe/Moscow" }
+        status: { type: string, enum: [active, invited, suspended, deleted], default: active }
+        managerId: { type: string, nullable: true }
+        orgUnitId: { type: string, nullable: true }
+        attributes: { type: object, additionalProperties: true }
+        avatarUrl: { type: string, format: uri, nullable: true }
+        createdAt: { type: string, format: date-time }
+      required: [id, email, name, status]
+
+    UserCreate:
+      type: object
+      properties:
+        email: { type: string, format: email }
+        name: { type: string }
+        phone: { type: string, nullable: true }
+        locale: { type: string }
+        tz: { type: string }
+        managerId: { type: string, nullable: true }
+        orgUnitId: { type: string, nullable: true }
+        attributes: { type: object, additionalProperties: true }
+      required: [email, name]
+
+    UserPatch:
+      type: object
+      properties:
+        name: { type: string }
+        phone: { type: string, nullable: true }
+        locale: { type: string }
+        tz: { type: string }
+        managerId: { type: string, nullable: true }
+        orgUnitId: { type: string, nullable: true }
+        attributes: { type: object, additionalProperties: true }
+
+    UserPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+        nextCursor:
+          type: string
+          nullable: true
+
+    Project:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        description: { type: string, nullable: true }
+        ownerId: { type: string }
+        createdAt: { type: string, format: date-time }
+      required: [id, name, ownerId]
+
+    ProjectCreate:
+      type: object
+      properties:
+        name: { type: string }
+        description: { type: string }
+        ownerId: { type: string }
+      required: [name, ownerId]
+
+    Board:
+      type: object
+      properties:
+        id: { type: string }
+        projectId: { type: string }
+        name: { type: string }
+        order: { type: number }
+      required: [id, projectId, name]
+
+    BoardCreate:
+      type: object
+      properties:
+        name: { type: string }
+        order: { type: number }
+      required: [name]
+
+    Column:
+      type: object
+      properties:
+        id: { type: string }
+        boardId: { type: string }
+        name: { type: string }
+        order: { type: number }
+        wipLimit: { type: integer, nullable: true }
+      required: [id, boardId, name]
+
+    ColumnCreate:
+      type: object
+      properties:
+        name: { type: string }
+        order: { type: number }
+        wipLimit: { type: integer, nullable: true }
+      required: [name]
+
+    ColumnPatch:
+      type: object
+      properties:
+        name: { type: string }
+        wipLimit: { type: integer, nullable: true }
+
+    Task:
+      type: object
+      properties:
+        id: { type: string }
+        title: { type: string }
+        description: { type: string, nullable: true }
+        assigneeId: { type: string, nullable: true }
+        columnId: { type: string }
+        order: { type: number }
+        dueDate: { type: string, format: date, nullable: true }
+        createdAt: { type: string, format: date-time }
+      required: [id, title, columnId]
+
+    TaskCreate:
+      type: object
+      properties:
+        title: { type: string }
+        description: { type: string, nullable: true }
+        assigneeId: { type: string, nullable: true }
+        columnId: { type: string }
+        order: { type: number }
+        dueDate: { type: string, format: date, nullable: true }
+      required: [title, columnId]
+
+    TaskPatch:
+      type: object
+      properties:
+        title: { type: string }
+        description: { type: string, nullable: true }
+        assigneeId: { type: string, nullable: true }
+        columnId: { type: string }
+        order: { type: number }
+        dueDate: { type: string, format: date, nullable: true }
+
+    TaskReorder:
+      type: object
+      properties:
+        taskId: { type: string }
+        columnId: { type: string }
+        newIndex: { type: integer }
+        oldIndex: { type: integer }
+        oldColumnId: { type: string }
+      required: [taskId, columnId, newIndex]
+
+    Comment:
+      type: object
+      properties:
+        id: { type: string }
+        taskId: { type: string }
+        authorId: { type: string }
+        text: { type: string }
+        createdAt: { type: string, format: date-time }
+      required: [id, taskId, authorId, text]
+
+    CommentCreate:
+      type: object
+      properties:
+        text: { type: string }
+      required: [text]
+
+    Activity:
+      type: object
+      properties:
+        id: { type: string }
+        timestamp: { type: string, format: date-time }
+        action: { type: string }
+        actorId: { type: string }
+        entityType: { type: string }
+        entityId: { type: string }
+      required: [id, timestamp, action, actorId]
+
+    FilePresignRequest:
+      type: object
+      properties:
+        fileName: { type: string }
+        contentType: { type: string }
+        size: { type: integer }
+      required: [fileName, contentType, size]
+
+    FilePresignResponse:
+      type: object
+      properties:
+        uploadUrl: { type: string, format: uri }
+        fileUrl: { type: string, format: uri }
+      required: [uploadUrl, fileUrl]
+
+    Calendar:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        color: { type: string, nullable: true }
+        isPrimary: { type: boolean }
+      required: [id, name]
+
+    CalendarEvent:
+      type: object
+      properties:
+        id: { type: string }
+        calendarId: { type: string }
+        organizerId: { type: string }
+        summary: { type: string }
+        description: { type: string, nullable: true }
+        tz: { type: string }
+        start: { type: string, format: date-time }
+        end: { type: string, format: date-time }
+        rrule: { type: string, nullable: true }
+        roomId: { type: string, nullable: true }
+        attendees:
+          type: array
+          items:
+            $ref: '#/components/schemas/Attendee'
+        notify: { type: boolean, default: false }
+      required: [id, calendarId, organizerId, summary, start, end]
+
+    EventCreate:
+      type: object
+      properties:
+        calendarId: { type: string }
+        summary: { type: string }
+        description: { type: string, nullable: true }
+        tz: { type: string }
+        start: { type: string, format: date-time }
+        end: { type: string, format: date-time }
+        rrule: { type: string, nullable: true }
+        roomId: { type: string, nullable: true }
+        attendees:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttendeeUpsert'
+        notify: { type: boolean, default: false }
+      required: [calendarId, summary, start, end]
+
+    EventPatch:
+      type: object
+      properties:
+        summary: { type: string }
+        description: { type: string, nullable: true }
+        tz: { type: string }
+        start: { type: string, format: date-time }
+        end: { type: string, format: date-time }
+        rrule: { type: string, nullable: true }
+        roomId: { type: string, nullable: true }
+        attendees:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttendeeUpsert'
+        notify: { type: boolean, default: false }
+
+    Attendee:
+      type: object
+      properties:
+        userId: { type: string }
+        status: { type: string, enum: [pending, accepted, declined, tentative], default: pending }
+        displayName: { type: string }
+        email: { type: string, format: email }
+      required: [userId, status, email]
+
+    AttendeeUpsert:
+      type: object
+      properties:
+        userId: { type: string }
+        email: { type: string, format: email }
+        displayName: { type: string }
+      required: [email]
+
+    RsvpRequest:
+      type: object
+      properties:
+        status: { type: string, enum: [accepted, declined, tentative] }
+      required: [status]
+
+    FreeBusy:
+      type: object
+      properties:
+        principal: { type: string }
+        busy:
+          type: array
+          items:
+            type: object
+            properties:
+              start: { type: string, format: date-time }
+              end: { type: string, format: date-time }
+      required: [principal, busy]
+
+    FindTimeRequest:
+      type: object
+      properties:
+        participants:
+          type: array
+          items: { type: string }
+        durationMins: { type: integer, default: 30 }
+        from: { type: string, format: date-time }
+        to: { type: string, format: date-time }
+        intervalMins: { type: integer, default: 30 }
+        requiredThreshold: { type: number, default: 1.0 }
+      required: [participants, from, to]
+
+    TimeSlot:
+      type: object
+      properties:
+        start: { type: string, format: date-time }
+        end: { type: string, format: date-time }
+        score: { type: number }
+        availableParticipants:
+          type: array
+          items: { type: string }
+      required: [start, end, score]
+
+    Room:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        building: { type: string, nullable: true }
+        floor: { type: string, nullable: true }
+        capacity: { type: integer }
+        equipment: { type: array, items: { type: string } }
+        attributes: { type: object, additionalProperties: true }
+        calendarId: { type: string }
+      required: [id, name, capacity, calendarId]
+
+    RoomCreate:
+      type: object
+      properties:
+        name: { type: string }
+        building: { type: string, nullable: true }
+        floor: { type: string, nullable: true }
+        capacity: { type: integer }
+        equipment: { type: array, items: { type: string } }
+        attributes: { type: object, additionalProperties: true }
+      required: [name, capacity]
+
+    BookingHoldRequest:
+      type: object
+      properties:
+        start: { type: string, format: date-time }
+        end: { type: string, format: date-time }
+        title: { type: string }
+        organizerId: { type: string }
+      required: [start, end, title, organizerId]
+
+    BookingHoldResponse:
+      type: object
+      properties:
+        holdId: { type: string }
+        expiresAt: { type: string, format: date-time }
+      required: [holdId, expiresAt]
+
+    BookingConfirmRequest:
+      type: object
+      properties:
+        holdId: { type: string }
+        eventId: { type: string }
+      required: [holdId]
+
+    Group:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        description: { type: string, nullable: true }
+        memberCount: { type: integer }
+        createdAt: { type: string, format: date-time }
+      required: [id, name]
+
+    GroupCreate:
+      type: object
+      properties:
+        name: { type: string }
+        description: { type: string, nullable: true }
+      required: [name]
+
+    OrgUnit:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        parentId: { type: string, nullable: true }
+        path: { type: string }
+        attributes: { type: object, additionalProperties: true }
+        createdAt: { type: string, format: date-time }
+      required: [id, name]
+
+    OrgUnitCreate:
+      type: object
+      properties:
+        name: { type: string }
+        parentId: { type: string, nullable: true }
+        attributes: { type: object, additionalProperties: true }
+      required: [name]
+
+    OrgUnitPatch:
+      type: object
+      properties:
+        name: { type: string }
+        parentId: { type: string, nullable: true }
+        attributes: { type: object, additionalProperties: true }
+
+    DataSource:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        kind: { type: string, enum: [sql, rest] }
+        sql: { type: string, nullable: true }
+        rest:
+          type: object
+          nullable: true
+          properties:
+            method: { type: string, enum: [GET, POST] }
+            path: { type: string }
+            query: { type: object, additionalProperties: true }
+            body: { type: object, additionalProperties: true }
+        transform: { type: object, additionalProperties: true }
+        paramsSchema: { type: object }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      required: [id, name, kind]
+
+    DataSourceCreate:
+      type: object
+      properties:
+        name: { type: string }
+        kind: { type: string, enum: [sql, rest] }
+        sql: { type: string, nullable: true }
+        rest:
+          type: object
+          nullable: true
+          properties:
+            method: { type: string, enum: [GET, POST] }
+            path: { type: string }
+            query: { type: object, additionalProperties: true }
+            body: { type: object, additionalProperties: true }
+        transform: { type: object, additionalProperties: true }
+        paramsSchema: { type: object }
+      required: [name, kind]
+
+    DataSourcePatch:
+      type: object
+      properties:
+        name: { type: string }
+        sql: { type: string, nullable: true }
+        rest:
+          type: object
+          nullable: true
+          properties:
+            method: { type: string, enum: [GET, POST] }
+            path: { type: string }
+            query: { type: object, additionalProperties: true }
+            body: { type: object, additionalProperties: true }
+        transform: { type: object, additionalProperties: true }
+        paramsSchema: { type: object }
+
+    DataSet:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        dataSourceId: { type: string }
+        query: { type: string }
+        paramsSchema: { type: object, nullable: true }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      required: [id, name, dataSourceId, query]
+
+    DataSetCreate:
+      type: object
+      properties:
+        name: { type: string }
+        dataSourceId: { type: string }
+        query: { type: string }
+        paramsSchema: { type: object, nullable: true }
+      required: [name, dataSourceId, query]
+
+    DataSetPatch:
+      type: object
+      properties:
+        name: { type: string }
+        query: { type: string }
+        paramsSchema: { type: object, nullable: true }
+
+    DataSetPreviewRequest:
+      type: object
+      properties:
+        params: { type: object, additionalProperties: true }
+      required: [params]
+
+    ReportTemplate:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        kind: { type: string, enum: [jasper, poi_xlsx, poi_docx] }
+        datasetId: { type: string, nullable: true }
+        paramsSchema: { type: object, nullable: true }
+        currentVersionId: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      required: [id, name, kind]
+
+    ReportTemplateCreate:
+      type: object
+      properties:
+        name: { type: string }
+        kind: { type: string, enum: [jasper, poi_xlsx, poi_docx] }
+        datasetId: { type: string, nullable: true }
+        paramsSchema: { type: object, nullable: true }
+      required: [name, kind]
+
+    ReportTemplatePatch:
+      type: object
+      properties:
+        name: { type: string }
+        datasetId: { type: string, nullable: true }
+        paramsSchema: { type: object, nullable: true }
+
+    TemplateVersion:
+      type: object
+      properties:
+        id: { type: string }
+        templateId: { type: string }
+        version: { type: integer }
+        changeLog: { type: string, nullable: true }
+        storageUrl: { type: string, format: uri }
+        uploadedAt: { type: string, format: date-time }
+      required: [id, templateId, version, storageUrl, uploadedAt]
+
+    ReportRenderRequest:
+      type: object
+      properties:
+        params: { type: object, additionalProperties: true }
+        format: { type: string, enum: [pdf, xlsx, docx], default: pdf }
+      required: [params]
+
+    ReportJob:
+      type: object
+      properties:
+        id: { type: string }
+        templateId: { type: string }
+        status: { type: string, enum: [queued, running, done, failed] }
+        format: { type: string }
+        params: { type: object, additionalProperties: true }
+        error: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+        startedAt: { type: string, format: date-time, nullable: true }
+        finishedAt: { type: string, format: date-time, nullable: true }
+      required: [id, templateId, status, format, createdAt]
+
+    ReportSchedule:
+      type: object
+      properties:
+        id: { type: string }
+        templateId: { type: string }
+        cron: { type: string }
+        params: { type: object, additionalProperties: true }
+        enabled: { type: boolean, default: true }
+        lastRunAt: { type: string, format: date-time, nullable: true }
+        nextRunAt: { type: string, format: date-time, nullable: true }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      required: [id, templateId, cron, createdAt]
+
+    ReportScheduleCreate:
+      type: object
+      properties:
+        templateId: { type: string }
+        cron: { type: string }
+        params: { type: object, additionalProperties: true }
+        enabled: { type: boolean, default: true }
+      required: [templateId, cron]
+
+    ReportSchedulePatch:
+      type: object
+      properties:
+        cron: { type: string }
+        params: { type: object, additionalProperties: true }
+        enabled: { type: boolean }
+
+    AssessmentSession:
+      type: object
+      properties:
+        id: { type: string }
+        userId: { type: string }
+        courseId: { type: string }
+        status: { type: string, enum: [draft, active, closed] }
+        createdAt: { type: string, format: date-time }
+        completedAt: { type: string, format: date-time, nullable: true }
+        score: { type: number, nullable: true }
+      required: [id, userId, courseId, status]
+
+    AssessmentCreate:
+      type: object
+      properties:
+        userId: { type: string }
+        courseId: { type: string }
+      required: [userId, courseId]
