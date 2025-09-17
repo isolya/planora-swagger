@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Planora Reports Service API
   version: 1.0.0
-  description: API для управления отчётами: источники данных, датасеты, шаблоны и генерация.
+  description: API для управления отчётами: источники данных, датасеты, шаблоны, генерация и расписания.
 servers:
   - url: https://api.planora.local/api
 tags:
@@ -14,6 +14,8 @@ tags:
     description: Шаблоны отчётов
   - name: Reports
     description: Генерация отчётов
+  - name: Schedules
+    description: Расписания отчётов
 
 paths:
   /report-datasources:
@@ -468,6 +470,74 @@ paths:
                 type: string
                 format: binary
 
+  # ============ ВОЗВРАЩЕННЫЙ РАЗДЕЛ SCHEDULES ============
+  /report-schedules:
+    get:
+      tags: [Schedules]
+      summary: Список расписаний
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReportSchedule'
+    post:
+      tags: [Schedules]
+      summary: Создать расписание
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportScheduleCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportSchedule'
+
+  /report-schedules/{id}:
+    patch:
+      tags: [Schedules]
+      summary: Обновить расписание
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportSchedulePatch'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportSchedule'
+    delete:
+      tags: [Schedules]
+      summary: Удалить расписание
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: No Content
+  # =======================================================
+
 components:
   schemas:
     DataSource:
@@ -619,3 +689,35 @@ components:
         startedAt: { type: string, format: date-time, nullable: true }
         finishedAt: { type: string, format: date-time, nullable: true }
       required: [id, templateId, status, format, createdAt]
+
+    # ============ СХЕМЫ ДЛЯ SCHEDULES ============
+    ReportSchedule:
+      type: object
+      properties:
+        id: { type: string }
+        templateId: { type: string }
+        cron: { type: string }
+        params: { type: object, additionalProperties: true }
+        enabled: { type: boolean, default: true }
+        lastRunAt: { type: string, format: date-time, nullable: true }
+        nextRunAt: { type: string, format: date-time, nullable: true }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      required: [id, templateId, cron, createdAt]
+
+    ReportScheduleCreate:
+      type: object
+      properties:
+        templateId: { type: string }
+        cron: { type: string }
+        params: { type: object, additionalProperties: true }
+        enabled: { type: boolean, default: true }
+      required: [templateId, cron]
+
+    ReportSchedulePatch:
+      type: object
+      properties:
+        cron: { type: string }
+        params: { type: object, additionalProperties: true }
+        enabled: { type: boolean }
+    # =============================================

@@ -7,7 +7,7 @@ paths:
   /calendars/my:
     get:
       tags:
-      - Calendars
+        - Calendars
       summary: Мои календари
       responses:
         '200':
@@ -21,25 +21,25 @@ paths:
   /events:
     get:
       tags:
-      - Events
+        - Events
       summary: События диапазона
       parameters:
-      - name: from
-        in: query
-        required: true
-        schema:
-          type: string
-          format: date-time
-      - name: to
-        in: query
-        required: true
-        schema:
-          type: string
-          format: date-time
-      - name: calendarId
-        in: query
-        schema:
-          type: string
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: calendarId
+          in: query
+          schema:
+            type: string
       responses:
         '200':
           description: OK
@@ -51,7 +51,7 @@ paths:
                   $ref: '#/components/schemas/CalendarEvent'
     post:
       tags:
-      - Events
+        - Events
       summary: Создать событие
       requestBody:
         required: true
@@ -69,14 +69,14 @@ paths:
   /events/{eventId}:
     patch:
       tags:
-      - Events
+        - Events
       summary: Обновить событие
       parameters:
-      - name: eventId
-        in: path
-        required: true
-        schema:
-          type: string
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -92,28 +92,28 @@ paths:
                 $ref: '#/components/schemas/CalendarEvent'
     delete:
       tags:
-      - Events
+        - Events
       summary: Удалить событие
       parameters:
-      - name: eventId
-        in: path
-        required: true
-        schema:
-          type: string
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
         '204':
           description: No Content
   /events/{eventId}/attendees:
     post:
       tags:
-      - Events
+        - Events
       summary: Добавить/обновить участников
       parameters:
-      - name: eventId
-        in: path
-        required: true
-        schema:
-          type: string
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -128,14 +128,14 @@ paths:
   /events/{eventId}/rsvp:
     post:
       tags:
-      - Events
+        - Events
       summary: RSVP участника
       parameters:
-      - name: eventId
-        in: path
-        required: true
-        schema:
-          type: string
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -148,7 +148,7 @@ paths:
   /rooms:
     get:
       tags:
-      - Rooms
+        - Rooms
       summary: Список переговорных
       responses:
         '200':
@@ -161,7 +161,7 @@ paths:
                   $ref: '#/components/schemas/Room'
     post:
       tags:
-      - Rooms
+        - Rooms
       summary: Создать переговорную
       requestBody:
         required: true
@@ -179,14 +179,14 @@ paths:
   /rooms/{roomId}/book:
     post:
       tags:
-      - Booking
+        - Booking
       summary: Забронировать переговорную
       parameters:
-      - name: roomId
-        in: path
-        required: true
-        schema:
-          type: string
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -203,7 +203,7 @@ paths:
   /rooms/confirm:
     post:
       tags:
-      - Booking
+        - Booking
       summary: Подтвердить бронь
       requestBody:
         required: true
@@ -217,7 +217,7 @@ paths:
   /events/find-time:
     post:
       tags:
-      - Availability
+        - Availability
       summary: Поиск подходящего времени
       requestBody:
         required: true
@@ -236,6 +236,27 @@ paths:
                   $ref: '#/components/schemas/TimeSlot'
 components:
   schemas:
+    # ========= ДОБАВЛЕНА НЕДОСТАЮЩАЯ СХЕМА =========
+    Attendee:
+      type: object
+      properties:
+        userId:
+          type: string
+        status:
+          type: string
+          enum: [pending, accepted, declined, tentative]
+          default: pending
+        displayName:
+          type: string
+        email:
+          type: string
+          format: email
+      required:
+        - userId
+        - status
+        - email
+    # ==============================================
+
     Room:
       type: object
       properties:
@@ -261,10 +282,11 @@ components:
         calendarId:
           type: string
       required:
-      - id
-      - name
-      - capacity
-      - calendarId
+        - id
+        - name
+        - capacity
+        - calendarId
+
     BookingHoldResponse:
       type: object
       properties:
@@ -274,8 +296,9 @@ components:
           type: string
           format: date-time
       required:
-      - holdId
-      - expiresAt
+        - holdId
+        - expiresAt
+
     CalendarEvent:
       type: object
       properties:
@@ -307,17 +330,18 @@ components:
         attendees:
           type: array
           items:
-            $ref: '#/components/schemas/Attendee'
+            $ref: '#/components/schemas/Attendee' # Теперь ссылается на существующую схему
         notify:
           type: boolean
           default: false
       required:
-      - id
-      - calendarId
-      - organizerId
-      - summary
-      - start
-      - end
+        - id
+        - calendarId
+        - organizerId
+        - summary
+        - start
+        - end
+
     AttendeeUpsert:
       type: object
       properties:
@@ -329,7 +353,8 @@ components:
         displayName:
           type: string
       required:
-      - email
+        - email
+
     EventCreate:
       type: object
       properties:
@@ -362,10 +387,11 @@ components:
           type: boolean
           default: false
       required:
-      - calendarId
-      - summary
-      - start
-      - end
+        - calendarId
+        - summary
+        - start
+        - end
+
     BookingHoldRequest:
       type: object
       properties:
@@ -380,21 +406,23 @@ components:
         organizerId:
           type: string
       required:
-      - start
-      - end
-      - title
-      - organizerId
+        - start
+        - end
+        - title
+        - organizerId
+
     RsvpRequest:
       type: object
       properties:
         status:
           type: string
           enum:
-          - accepted
-          - declined
-          - tentative
+            - accepted
+            - declined
+            - tentative
       required:
-      - status
+        - status
+
     EventPatch:
       type: object
       properties:
@@ -424,6 +452,7 @@ components:
         notify:
           type: boolean
           default: false
+
     BookingConfirmRequest:
       type: object
       properties:
@@ -432,7 +461,8 @@ components:
         eventId:
           type: string
       required:
-      - holdId
+        - holdId
+
     TimeSlot:
       type: object
       properties:
@@ -449,9 +479,10 @@ components:
           items:
             type: string
       required:
-      - start
-      - end
-      - score
+        - start
+        - end
+        - score
+
     Calendar:
       type: object
       properties:
@@ -465,8 +496,9 @@ components:
         isPrimary:
           type: boolean
       required:
-      - id
-      - name
+        - id
+        - name
+
     RoomCreate:
       type: object
       properties:
@@ -488,8 +520,9 @@ components:
           type: object
           additionalProperties: true
       required:
-      - name
-      - capacity
+        - name
+        - capacity
+
     FindTimeRequest:
       type: object
       properties:
@@ -513,6 +546,6 @@ components:
           type: number
           default: 1.0
       required:
-      - participants
-      - from
-      - to
+        - participants
+        - from
+        - to
