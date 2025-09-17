@@ -1,0 +1,51 @@
+openapi: 3.0.3
+info:
+  title: files-service API
+  version: 1.0.0
+  description: OpenAPI спецификация для files-service
+paths:
+  /files/presign:
+    post:
+      tags:
+      - Files
+      summary: Presigned URL для загрузки
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FilePresignRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FilePresignResponse'
+components:
+  schemas:
+    FilePresignRequest:
+      type: object
+      properties:
+        fileName:
+          type: string
+        contentType:
+          type: string
+        size:
+          type: integer
+      required:
+      - fileName
+      - contentType
+      - size
+    FilePresignResponse:
+      type: object
+      properties:
+        uploadUrl:
+          type: string
+          format: uri
+        fileUrl:
+          type: string
+          format: uri
+      required:
+      - uploadUrl
+      - fileUrl

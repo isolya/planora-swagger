@@ -1,0 +1,100 @@
+openapi: 3.0.3
+info:
+  title: ispring-service API
+  version: 1.0.0
+  description: OpenAPI спецификация для ispring-service
+paths:
+  /ispring/sessions:
+    get:
+      tags:
+      - iSpring
+      summary: Список/фильтр сессий оценок
+      parameters:
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - draft
+          - active
+          - closed
+      - name: userId
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AssessmentSession'
+    post:
+      tags:
+      - iSpring
+      summary: Создать оценочную сессию (через iSpring)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssessmentCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssessmentSession'
+  /ispring/sync:
+    post:
+      tags:
+      - iSpring
+      summary: Ручной запуск синхронизации результатов
+      responses:
+        '202':
+          description: Accepted
+components:
+  schemas:
+    AssessmentSession:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        courseId:
+          type: string
+        status:
+          type: string
+          enum:
+          - draft
+          - active
+          - closed
+        createdAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+        score:
+          type: number
+          nullable: true
+      required:
+      - id
+      - userId
+      - courseId
+      - status
+    AssessmentCreate:
+      type: object
+      properties:
+        userId:
+          type: string
+        courseId:
+          type: string
+      required:
+      - userId
+      - courseId

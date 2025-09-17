@@ -1,0 +1,541 @@
+openapi: 3.0.3
+info:
+  title: projects-service API
+  version: 1.0.0
+  description: OpenAPI спецификация для projects-service
+paths:
+  /projects:
+    get:
+      tags:
+      - Projects
+      summary: Список проектов
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Project'
+    post:
+      tags:
+      - Projects
+      summary: Создать проект
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+  /projects/{projectId}/boards:
+    get:
+      tags:
+      - Boards
+      summary: Список досок проекта
+      parameters:
+      - name: projectId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Board'
+    post:
+      tags:
+      - Boards
+      summary: Создать доску
+      parameters:
+      - name: projectId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BoardCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Board'
+  /boards/{boardId}/columns:
+    get:
+      tags:
+      - Boards
+      summary: Колонки доски
+      parameters:
+      - name: boardId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Column'
+    post:
+      tags:
+      - Boards
+      summary: Создать колонку
+      parameters:
+      - name: boardId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ColumnCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Column'
+  /columns/{columnId}:
+    patch:
+      tags:
+      - Boards
+      summary: Обновить колонку
+      parameters:
+      - name: columnId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ColumnPatch'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Column'
+  /tasks:
+    get:
+      tags:
+      - Tasks
+      summary: Список задач
+      parameters:
+      - name: projectId
+        in: query
+        schema:
+          type: string
+      - name: boardId
+        in: query
+        schema:
+          type: string
+      - name: columnId
+        in: query
+        schema:
+          type: string
+      - name: assigneeId
+        in: query
+        schema:
+          type: string
+      - name: dueFrom
+        in: query
+        schema:
+          type: string
+          format: date-time
+      - name: dueTo
+        in: query
+        schema:
+          type: string
+          format: date-time
+      - name: q
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+    post:
+      tags:
+      - Tasks
+      summary: Создать задачу
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+  /tasks/{taskId}:
+    patch:
+      tags:
+      - Tasks
+      summary: Обновить задачу
+      parameters:
+      - name: taskId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskPatch'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+  /tasks/reorder:
+    patch:
+      tags:
+      - Tasks
+      summary: Изменить порядок задач
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskReorder'
+      responses:
+        '200':
+          description: OK
+  /tasks/{taskId}/comments:
+    get:
+      tags:
+      - Comments
+      summary: Комментарии к задаче
+      parameters:
+      - name: taskId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Comment'
+    post:
+      tags:
+      - Comments
+      summary: Добавить комментарий
+      parameters:
+      - name: taskId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+  /activity:
+    get:
+      tags:
+      - Activity
+      summary: Лента активности
+      parameters:
+      - name: entityType
+        in: query
+        schema:
+          type: string
+      - name: entityId
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Activity'
+components:
+  schemas:
+    Comment:
+      type: object
+      properties:
+        id:
+          type: string
+        taskId:
+          type: string
+        authorId:
+          type: string
+        text:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+      - id
+      - taskId
+      - authorId
+      - text
+    ColumnPatch:
+      type: object
+      properties:
+        name:
+          type: string
+        wipLimit:
+          type: integer
+          nullable: true
+    TaskReorder:
+      type: object
+      properties:
+        taskId:
+          type: string
+        columnId:
+          type: string
+        newIndex:
+          type: integer
+        oldIndex:
+          type: integer
+        oldColumnId:
+          type: string
+      required:
+      - taskId
+      - columnId
+      - newIndex
+    TaskCreate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        assigneeId:
+          type: string
+          nullable: true
+        columnId:
+          type: string
+        order:
+          type: number
+        dueDate:
+          type: string
+          format: date
+          nullable: true
+      required:
+      - title
+      - columnId
+    Column:
+      type: object
+      properties:
+        id:
+          type: string
+        boardId:
+          type: string
+        name:
+          type: string
+        order:
+          type: number
+        wipLimit:
+          type: integer
+          nullable: true
+      required:
+      - id
+      - boardId
+      - name
+    Activity:
+      type: object
+      properties:
+        id:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        action:
+          type: string
+        actorId:
+          type: string
+        entityType:
+          type: string
+        entityId:
+          type: string
+      required:
+      - id
+      - timestamp
+      - action
+      - actorId
+    ProjectCreate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        ownerId:
+          type: string
+      required:
+      - name
+      - ownerId
+    ColumnCreate:
+      type: object
+      properties:
+        name:
+          type: string
+        order:
+          type: number
+        wipLimit:
+          type: integer
+          nullable: true
+      required:
+      - name
+    CommentCreate:
+      type: object
+      properties:
+        text:
+          type: string
+      required:
+      - text
+    Board:
+      type: object
+      properties:
+        id:
+          type: string
+        projectId:
+          type: string
+        name:
+          type: string
+        order:
+          type: number
+      required:
+      - id
+      - projectId
+      - name
+    TaskPatch:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        assigneeId:
+          type: string
+          nullable: true
+        columnId:
+          type: string
+        order:
+          type: number
+        dueDate:
+          type: string
+          format: date
+          nullable: true
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        assigneeId:
+          type: string
+          nullable: true
+        columnId:
+          type: string
+        order:
+          type: number
+        dueDate:
+          type: string
+          format: date
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+      - id
+      - title
+      - columnId
+    BoardCreate:
+      type: object
+      properties:
+        name:
+          type: string
+        order:
+          type: number
+      required:
+      - name
+    Project:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        ownerId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+      - id
+      - name
+      - ownerId

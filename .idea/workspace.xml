@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="9d27ab35-4caa-43a6-9014-014314d9dc43" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/../проект Planora swagger/favicon-16x16.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../проект Planora swagger/favicon-32x32.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../проект Planora swagger/index.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../проект Planora swagger/index.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../проект Planora swagger/oauth2-redirect.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../проект Planora swagger/openapi.yaml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../проект Planora swagger/swagger-initializer.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../проект Planora swagger/swagger-ui-bundle.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../проект Planora swagger/swagger-ui-es-bundle-core.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../проект Planora swagger/swagger-ui-es-bundle.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../проект Planora swagger/swagger-ui-standalone-preset.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../проект Planora swagger/swagger-ui.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../проект Planora swagger/swagger-ui.js" beforeDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 4
+}</component>
+  <component name="ProjectId" id="31xkitH1H2tQJvJ6Ju2T5N3V8LV" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "main",
+    "last_opened_file_path": "/Users/olgasedyseva/Desktop/planora-swagger"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
+    </key>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="9d27ab35-4caa-43a6-9014-014314d9dc43" name="Changes" comment="" />
+      <created>1756473241518</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1756473241518</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>

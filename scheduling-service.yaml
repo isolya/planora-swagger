@@ -1,0 +1,518 @@
+openapi: 3.0.3
+info:
+  title: scheduling-service API
+  version: 1.0.0
+  description: OpenAPI спецификация для scheduling-service
+paths:
+  /calendars/my:
+    get:
+      tags:
+      - Calendars
+      summary: Мои календари
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Calendar'
+  /events:
+    get:
+      tags:
+      - Events
+      summary: События диапазона
+      parameters:
+      - name: from
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+      - name: to
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+      - name: calendarId
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CalendarEvent'
+    post:
+      tags:
+      - Events
+      summary: Создать событие
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalendarEvent'
+  /events/{eventId}:
+    patch:
+      tags:
+      - Events
+      summary: Обновить событие
+      parameters:
+      - name: eventId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventPatch'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalendarEvent'
+    delete:
+      tags:
+      - Events
+      summary: Удалить событие
+      parameters:
+      - name: eventId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          description: No Content
+  /events/{eventId}/attendees:
+    post:
+      tags:
+      - Events
+      summary: Добавить/обновить участников
+      parameters:
+      - name: eventId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/AttendeeUpsert'
+      responses:
+        '200':
+          description: OK
+  /events/{eventId}/rsvp:
+    post:
+      tags:
+      - Events
+      summary: RSVP участника
+      parameters:
+      - name: eventId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RsvpRequest'
+      responses:
+        '200':
+          description: OK
+  /rooms:
+    get:
+      tags:
+      - Rooms
+      summary: Список переговорных
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Room'
+    post:
+      tags:
+      - Rooms
+      summary: Создать переговорную
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoomCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Room'
+  /rooms/{roomId}/book:
+    post:
+      tags:
+      - Booking
+      summary: Забронировать переговорную
+      parameters:
+      - name: roomId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingHoldRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingHoldResponse'
+  /rooms/confirm:
+    post:
+      tags:
+      - Booking
+      summary: Подтвердить бронь
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingConfirmRequest'
+      responses:
+        '200':
+          description: OK
+  /events/find-time:
+    post:
+      tags:
+      - Availability
+      summary: Поиск подходящего времени
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FindTimeRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TimeSlot'
+components:
+  schemas:
+    Room:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        building:
+          type: string
+          nullable: true
+        floor:
+          type: string
+          nullable: true
+        capacity:
+          type: integer
+        equipment:
+          type: array
+          items:
+            type: string
+        attributes:
+          type: object
+          additionalProperties: true
+        calendarId:
+          type: string
+      required:
+      - id
+      - name
+      - capacity
+      - calendarId
+    BookingHoldResponse:
+      type: object
+      properties:
+        holdId:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+      required:
+      - holdId
+      - expiresAt
+    CalendarEvent:
+      type: object
+      properties:
+        id:
+          type: string
+        calendarId:
+          type: string
+        organizerId:
+          type: string
+        summary:
+          type: string
+        description:
+          type: string
+          nullable: true
+        tz:
+          type: string
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+        rrule:
+          type: string
+          nullable: true
+        roomId:
+          type: string
+          nullable: true
+        attendees:
+          type: array
+          items:
+            $ref: '#/components/schemas/Attendee'
+        notify:
+          type: boolean
+          default: false
+      required:
+      - id
+      - calendarId
+      - organizerId
+      - summary
+      - start
+      - end
+    AttendeeUpsert:
+      type: object
+      properties:
+        userId:
+          type: string
+        email:
+          type: string
+          format: email
+        displayName:
+          type: string
+      required:
+      - email
+    EventCreate:
+      type: object
+      properties:
+        calendarId:
+          type: string
+        summary:
+          type: string
+        description:
+          type: string
+          nullable: true
+        tz:
+          type: string
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+        rrule:
+          type: string
+          nullable: true
+        roomId:
+          type: string
+          nullable: true
+        attendees:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttendeeUpsert'
+        notify:
+          type: boolean
+          default: false
+      required:
+      - calendarId
+      - summary
+      - start
+      - end
+    BookingHoldRequest:
+      type: object
+      properties:
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+        title:
+          type: string
+        organizerId:
+          type: string
+      required:
+      - start
+      - end
+      - title
+      - organizerId
+    RsvpRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+          - accepted
+          - declined
+          - tentative
+      required:
+      - status
+    EventPatch:
+      type: object
+      properties:
+        summary:
+          type: string
+        description:
+          type: string
+          nullable: true
+        tz:
+          type: string
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+        rrule:
+          type: string
+          nullable: true
+        roomId:
+          type: string
+          nullable: true
+        attendees:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttendeeUpsert'
+        notify:
+          type: boolean
+          default: false
+    BookingConfirmRequest:
+      type: object
+      properties:
+        holdId:
+          type: string
+        eventId:
+          type: string
+      required:
+      - holdId
+    TimeSlot:
+      type: object
+      properties:
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+        score:
+          type: number
+        availableParticipants:
+          type: array
+          items:
+            type: string
+      required:
+      - start
+      - end
+      - score
+    Calendar:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        color:
+          type: string
+          nullable: true
+        isPrimary:
+          type: boolean
+      required:
+      - id
+      - name
+    RoomCreate:
+      type: object
+      properties:
+        name:
+          type: string
+        building:
+          type: string
+          nullable: true
+        floor:
+          type: string
+          nullable: true
+        capacity:
+          type: integer
+        equipment:
+          type: array
+          items:
+            type: string
+        attributes:
+          type: object
+          additionalProperties: true
+      required:
+      - name
+      - capacity
+    FindTimeRequest:
+      type: object
+      properties:
+        participants:
+          type: array
+          items:
+            type: string
+        durationMins:
+          type: integer
+          default: 30
+        from:
+          type: string
+          format: date-time
+        to:
+          type: string
+          format: date-time
+        intervalMins:
+          type: integer
+          default: 30
+        requiredThreshold:
+          type: number
+          default: 1.0
+      required:
+      - participants
+      - from
+      - to
