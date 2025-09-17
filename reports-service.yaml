@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Planora Reports Service API
   version: 1.0.0
-  description: API для управления отчётами: источники данных, датасеты, шаблоны, генерация и расписания.
+  description: API для управления отчётами - источники данных, датасеты, шаблоны, генерация и расписания.
 servers:
   - url: https://api.planora.local/api
 tags:
