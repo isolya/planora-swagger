@@ -1,0 +1,912 @@
+openapi: 3.0.3
+info:
+  title: Planora Course Content Management API
+  version: 1.0.0
+  description: API для создания, редактирования и управления структурой и содержанием курсов. Включает модули, уроки, блоки (лонгриды, задания, видео и др.).
+servers:
+  - url: https://api.planora.local/api
+tags:
+  - name: Courses
+    description: Управление курсами (метаданные)
+  - name: Modules
+    description: Модули курса
+  - name: Lessons
+    description: Уроки внутри модулей
+  - name: ContentBlocks
+    description: Блоки контента (лонгриды, задания, видео, ссылки и т.д.)
+  - name: Assignments
+    description: Задания и их проверка
+  - name: Quizzes
+    description: Тесты и вопросы
+  - name: ContentProgress
+    description: Прогресс пользователя по блокам контента
+
+paths:
+  # --- Управление курсами (метаданные) ---
+  /courses/{courseId}:
+    patch:
+      tags: [Courses]
+      summary: Обновить метаданные курса
+      parameters:
+        - name: courseId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseMetadataPatch'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Course'
+
+  # --- Управление модулями ---
+  /courses/{courseId}/modules:
+    get:
+      tags: [Modules]
+      summary: Получить список модулей курса
+      parameters:
+        - name: courseId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CourseModule'
+    post:
+      tags: [Modules]
+      summary: Создать новый модуль в курсе
+      parameters:
+        - name: courseId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseModuleCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseModule'
+
+  /modules/{moduleId}:
+    patch:
+      tags: [Modules]
+      summary: Обновить модуль
+      parameters:
+        - name: moduleId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseModulePatch'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseModule'
+    delete:
+      tags: [Modules]
+      summary: Удалить модуль
+      parameters:
+        - name: moduleId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: No Content
+
+  # --- Управление уроками ---
+  /modules/{moduleId}/lessons:
+    get:
+      tags: [Lessons]
+      summary: Получить список уроков в модуле
+      parameters:
+        - name: moduleId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Lesson'
+    post:
+      tags: [Lessons]
+      summary: Создать новый урок в модуле
+      parameters:
+        - name: moduleId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LessonCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lesson'
+
+  /lessons/{lessonId}:
+    patch:
+      tags: [Lessons]
+      summary: Обновить урок
+      parameters:
+        - name: lessonId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LessonPatch'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lesson'
+    delete:
+      tags: [Lessons]
+      summary: Удалить урок
+      parameters:
+        - name: lessonId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: No Content
+
+  # --- Управление блоками контента ---
+  /lessons/{lessonId}/blocks:
+    get:
+      tags: [ContentBlocks]
+      summary: Получить список блоков в уроке
+      parameters:
+        - name: lessonId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ContentBlock'
+    post:
+      tags: [ContentBlocks]
+      summary: Создать новый блок контента в уроке
+      parameters:
+        - name: lessonId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContentBlockCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentBlock'
+
+  /blocks/{blockId}:
+    get:
+      tags: [ContentBlocks]
+      summary: Получить блок контента
+      parameters:
+        - name: blockId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentBlock'
+    patch:
+      tags: [ContentBlocks]
+      summary: Обновить блок контента
+      parameters:
+        - name: blockId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContentBlockPatch'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentBlock'
+    delete:
+      tags: [ContentBlocks]
+      summary: Удалить блок контента
+      parameters:
+        - name: blockId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: No Content
+
+  # --- Управление заданиями (Assignment) ---
+  /blocks/{blockId}/submissions:
+    post:
+      tags: [Assignments]
+      summary: Отправить решение задания
+      parameters:
+        - name: blockId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Файл с решением (опционально)
+                text:
+                  type: string
+                  description: Текстовое решение (опционально)
+              # Один из двух (file или text) должен быть
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Submission'
+
+  /submissions/{submissionId}/grade:
+    post:
+      tags: [Assignments]
+      summary: Поставить оценку за задание
+      parameters:
+        - name: submissionId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GradeSubmission'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Submission'
+
+  # --- Управление вопросами в тестах (Quiz) ---
+  /blocks/{blockId}/questions:
+    post:
+      tags: [Quizzes]
+      summary: Добавить вопрос в тест
+      parameters:
+        - name: blockId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuizQuestionCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuizQuestion'
+
+  # --- Прогресс по контенту ---
+  /progress/users/{userId}/blocks/{blockId}:
+    post:
+      tags: [ContentProgress]
+      summary: Обновить прогресс пользователя по блоку
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: blockId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BlockProgressUpdate'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlockProgress'
+
+components:
+  schemas:
+    # --- Схемы для курсов ---
+    Course:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [draft, published, archived]
+        passingScore:
+          type: integer
+          minimum: 0
+          maximum: 100
+          default: 70
+        thumbnailUrl:
+          type: string
+          format: uri
+          nullable: true
+        totalBlocks:
+          type: integer
+          description: Общее количество блоков в курсе
+          default: 0
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - status
+        - passingScore
+
+    CourseMetadataPatch:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        passingScore:
+          type: integer
+        status:
+          type: string
+          enum: [draft, published, archived]
+        thumbnailUrl:
+          type: string
+          format: uri
+
+    # --- Схемы для модулей ---
+    CourseModule:
+      type: object
+      properties:
+        id:
+          type: string
+        courseId:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        order:
+          type: integer
+          description: Порядковый номер модуля в курсе
+        totalLessons:
+          type: integer
+          default: 0
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - courseId
+        - title
+        - order
+
+    CourseModuleCreate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        order:
+          type: integer
+      required:
+        - title
+        - order
+
+    CourseModulePatch:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        order:
+          type: integer
+
+    # --- Схемы для уроков ---
+    Lesson:
+      type: object
+      properties:
+        id:
+          type: string
+        moduleId:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        order:
+          type: integer
+          description: Порядковый номер урока в модуле
+        totalBlocks:
+          type: integer
+          default: 0
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - moduleId
+        - title
+        - order
+
+    LessonCreate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        order:
+          type: integer
+      required:
+        - title
+        - order
+
+    LessonPatch:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        order:
+          type: integer
+
+    # --- Схемы для блоков контента ---
+    ContentBlock:
+      type: object
+      properties:
+        id:
+          type: string
+        lessonId:
+          type: string
+        type:
+          type: string
+          enum: [text, video, assignment, quiz, link, embed]
+          description: Тип блока контента
+        title:
+          type: string
+          description: Название блока (например, "Задание 1" или "Видео-лекция")
+        order:
+          type: integer
+          description: Порядковый номер блока в уроке
+        # Специфичные поля для разных типов блоков
+        textContent:
+          type: string
+          nullable: true
+          description: Markdown или HTML-контент для типа 'text'
+        videoUrl:
+          type: string
+          format: uri
+          nullable: true
+          description: URL видео для типа 'video'
+        assignmentConfig:
+          $ref: '#/components/schemas/AssignmentConfig'
+          nullable: true
+        quizConfig:
+          $ref: '#/components/schemas/QuizConfig'
+          nullable: true
+        linkUrl:
+          type: string
+          format: uri
+          nullable: true
+          description: URL для типа 'link'
+        embedHtml:
+          type: string
+          nullable: true
+          description: HTML-код для встраивания для типа 'embed'
+        isRequired:
+          type: boolean
+          default: true
+          description: Обязателен ли блок для прохождения курса
+        estimatedTimeMinutes:
+          type: integer
+          nullable: true
+          description: Оценочное время на прохождение блока
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - lessonId
+        - type
+        - title
+        - order
+
+    ContentBlockCreate:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [text, video, assignment, quiz, link, embed]
+        title:
+          type: string
+        order:
+          type: integer
+        textContent:
+          type: string
+          nullable: true
+        videoUrl:
+          type: string
+          format: uri
+          nullable: true
+        assignmentConfig:
+          $ref: '#/components/schemas/AssignmentConfig'
+          nullable: true
+        quizConfig:
+          $ref: '#/components/schemas/QuizConfig'
+          nullable: true
+        linkUrl:
+          type: string
+          format: uri
+          nullable: true
+        embedHtml:
+          type: string
+          nullable: true
+        isRequired:
+          type: boolean
+        estimatedTimeMinutes:
+          type: integer
+          nullable: true
+      required:
+        - type
+        - title
+        - order
+
+    ContentBlockPatch:
+      type: object
+      properties:
+        title:
+          type: string
+        order:
+          type: integer
+        textContent:
+          type: string
+        videoUrl:
+          type: string
+          format: uri
+        assignmentConfig:
+          $ref: '#/components/schemas/AssignmentConfig'
+        quizConfig:
+          $ref: '#/components/schemas/QuizConfig'
+        linkUrl:
+          type: string
+          format: uri
+        embedHtml:
+          type: string
+        isRequired:
+          type: boolean
+        estimatedTimeMinutes:
+          type: integer
+
+    AssignmentConfig:
+      type: object
+      properties:
+        instructions:
+          type: string
+          description: Инструкция для студента
+        allowFileUpload:
+          type: boolean
+          default: false
+        allowTextSubmission:
+          type: boolean
+          default: true
+        dueDate:
+          type: string
+          format: date-time
+          nullable: true
+        maxPoints:
+          type: integer
+          default: 100
+
+    QuizConfig:
+      type: object
+      properties:
+        shuffleQuestions:
+          type: boolean
+          default: false
+        maxAttempts:
+          type: integer
+          default: 1
+        timeLimitMinutes:
+          type: integer
+          nullable: true
+        passingScore:
+          type: integer
+          default: 70
+
+    # --- Схемы для заданий ---
+    Submission:
+      type: object
+      properties:
+        id:
+          type: string
+        blockId:
+          type: string
+        userId:
+          type: string
+        fileUrl:
+          type: string
+          format: uri
+          nullable: true
+        text:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [submitted, graded, returned]
+          default: submitted
+        grade:
+          type: integer
+          nullable: true
+          description: Оценка (0-100)
+        feedback:
+          type: string
+          nullable: true
+          description: Комментарий от проверяющего
+        submittedAt:
+          type: string
+          format: date-time
+        gradedAt:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+        - id
+        - blockId
+        - userId
+        - status
+        - submittedAt
+
+    GradeSubmission:
+      type: object
+      properties:
+        grade:
+          type: integer
+          minimum: 0
+          maximum: 100
+        feedback:
+          type: string
+          nullable: true
+      required:
+        - grade
+
+    # --- Схемы для вопросов в тестах ---
+    QuizQuestion:
+      type: object
+      properties:
+        id:
+          type: string
+        blockId:
+          type: string
+        type:
+          type: string
+          enum: [single_choice, multiple_choice, true_false, short_answer, essay]
+        text:
+          type: string
+        points:
+          type: integer
+          default: 1
+        options:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              text:
+                type: string
+              isCorrect:
+                type: boolean
+          nullable: true
+          description: Для типов single_choice, multiple_choice, true_false
+        correctAnswer:
+          type: string
+          nullable: true
+          description: Для типов short_answer, true_false
+      required:
+        - id
+        - blockId
+        - type
+        - text
+        - points
+
+    QuizQuestionCreate:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [single_choice, multiple_choice, true_false, short_answer, essay]
+        text:
+          type: string
+        points:
+          type: integer
+        options:
+          type: array
+          items:
+            type: object
+            properties:
+              text:
+                type: string
+              isCorrect:
+                type: boolean
+        correctAnswer:
+          type: string
+          nullable: true
+      required:
+        - type
+        - text
+        - points
+
+    # --- Схемы для прогресса ---
+    BlockProgress:
+      type: object
+      properties:
+        userId:
+          type: string
+        blockId:
+          type: string
+        status:
+          type: string
+          enum: [not_started, in_progress, completed]
+          default: not_started
+        score:
+          type: number
+          nullable: true
+          description: Балл, полученный за блок (если применимо, например, за тест или задание)
+        startedAt:
+          type: string
+          format: date-time
+          nullable: true
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - userId
+        - blockId
+        - status
+
+    BlockProgressUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [in_progress, completed]
+        score:
+          type: number
+          nullable: true
