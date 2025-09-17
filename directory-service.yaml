@@ -1,57 +1,66 @@
 openapi: 3.0.3
 info:
-  title: directory-service API
+  title: Planora Directory Service API
   version: 1.0.0
-  description: OpenAPI спецификация для directory-service
+  description: API для управления пользователями, группами, организационными единицами, аватарами и импортом/экспортом.
+servers:
+  - url: https://api.planora.local/api
+tags:
+  - name: Users
+    description: Управление пользователями
+  - name: Groups
+    description: Группы пользователей
+  - name: OrgUnits
+    description: Организационные единицы
+  - name: Avatars
+    description: Управление аватарами
+  - name: Import/Export
+    description: Импорт/экспорт пользователей
+
 paths:
   /users:
     get:
-      tags:
-      - Users
+      tags: [Users]
       summary: Список/поиск пользователей
       parameters:
-      - name: q
-        in: query
-        schema:
-          type: string
-          description: Поиск по name/email/phone
-      - name: email
-        in: query
-        schema:
-          type: string
-          format: email
-      - name: role
-        in: query
-        schema:
-          type: string
-      - name: status
-        in: query
-        schema:
-          type: string
-          enum:
-          - active
-          - invited
-          - suspended
-          - deleted
-      - name: orgUnitId
-        in: query
-        schema:
-          type: string
-      - name: managerId
-        in: query
-        schema:
-          type: string
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          default: 50
-          minimum: 1
-          maximum: 200
-      - name: cursor
-        in: query
-        schema:
-          type: string
+        - name: q
+          in: query
+          schema:
+            type: string
+            description: "Поиск по name/email/phone"
+        - name: email
+          in: query
+          schema:
+            type: string
+            format: email
+        - name: role
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, invited, suspended, deleted]
+        - name: orgUnitId
+          in: query
+          schema:
+            type: string
+        - name: managerId
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 200
+        - name: cursor
+          in: query
+          schema:
+            type: string
       responses:
         '200':
           description: OK
@@ -60,11 +69,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/UserPage'
     post:
-      tags:
-      - Users
-      summary: Создать пользователя (инвайт/привязка к IdP)
-      description: Создаёт профиль в Directory и инициирует приглашение/создание учётной
-        записи в IdP (Keycloak).
+      tags: [Users]
+      summary: Создать пользователя
       requestBody:
         required: true
         content:
@@ -78,17 +84,17 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
+
   /users/{userId}:
     get:
-      tags:
-      - Users
+      tags: [Users]
       summary: Получить пользователя
       parameters:
-      - name: userId
-        in: path
-        required: true
-        schema:
-          type: string
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
         '200':
           description: OK
@@ -97,15 +103,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/User'
     patch:
-      tags:
-      - Users
+      tags: [Users]
       summary: Обновить профиль пользователя
       parameters:
-      - name: userId
-        in: path
-        required: true
-        schema:
-          type: string
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -120,29 +125,28 @@ paths:
               schema:
                 $ref: '#/components/schemas/User'
     delete:
-      tags:
-      - Users
+      tags: [Users]
       summary: Деактивировать/удалить пользователя
       parameters:
-      - name: userId
-        in: path
-        required: true
-        schema:
-          type: string
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
         '204':
           description: No Content
+
   /users/{userId}/avatar/presign:
     post:
-      tags:
-      - Avatars
+      tags: [Avatars]
       summary: Presigned URL для аватара
       parameters:
-      - name: userId
-        in: path
-        required: true
-        schema:
-          type: string
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -156,10 +160,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/FilePresignResponse'
+
   /groups:
     get:
-      tags:
-      - Groups
+      tags: [Groups]
       summary: Список групп
       responses:
         '200':
@@ -171,8 +175,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/Group'
     post:
-      tags:
-      - Groups
+      tags: [Groups]
       summary: Создать группу
       requestBody:
         required: true
@@ -187,10 +190,117 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Group'
+
+  /orgunits:
+    get:
+      tags: [OrgUnits]
+      summary: Список орг-единиц (дерево)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OrgUnit'
+    post:
+      tags: [OrgUnits]
+      summary: Создать орг-единицу
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrgUnitCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrgUnit'
+
+  /orgunits/{orgUnitId}:
+    get:
+      tags: [OrgUnits]
+      summary: Получить орг-единицу
+      parameters:
+        - name: orgUnitId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrgUnit'
+    patch:
+      tags: [OrgUnits]
+      summary: Обновить орг-единицу
+      parameters:
+        - name: orgUnitId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrgUnitPatch'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrgUnit'
+    delete:
+      tags: [OrgUnits]
+      summary: Удалить орг-единицу
+      parameters:
+        - name: orgUnitId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: No Content
+
+  /orgunits/{orgUnitId}/members:
+    get:
+      tags: [OrgUnits]
+      summary: Пользователи орг-единицы (рекурсивно)
+      parameters:
+        - name: orgUnitId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+                  total:
+                    type: integer
+
   /users/import:
     post:
-      tags:
-      - Import/Export
+      tags: [Import/Export]
       summary: Импорт пользователей (CSV/XLSX)
       requestBody:
         required: true
@@ -205,8 +315,7 @@ paths:
                 dryRun:
                   type: boolean
                   default: true
-              required:
-              - file
+              required: [file]
       responses:
         '200':
           description: Результат импорта
@@ -223,20 +332,18 @@ paths:
                     type: array
                     items:
                       type: string
+
   /users/export:
     get:
-      tags:
-      - Import/Export
+      tags: [Import/Export]
       summary: Экспорт пользователей (CSV/XLSX)
       parameters:
-      - name: format
-        in: query
-        schema:
-          type: string
-          enum:
-          - csv
-          - xlsx
-          default: csv
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [csv, xlsx]
+            default: csv
       responses:
         '200':
           description: File
@@ -249,69 +356,50 @@ paths:
               schema:
                 type: string
                 format: binary
+
 components:
   schemas:
-    FilePresignRequest:
-      type: object
-      properties:
-        fileName:
-          type: string
-        contentType:
-          type: string
-        size:
-          type: integer
-      required:
-      - fileName
-      - contentType
-      - size
     User:
       type: object
       properties:
-        id:
-          type: string
-        email:
-          type: string
-          format: email
-        name:
-          type: string
-        phone:
-          type: string
-          nullable: true
-        locale:
-          type: string
-          default: ru-RU
-        tz:
-          type: string
-          default: Europe/Moscow
-        status:
-          type: string
-          enum:
-          - active
-          - invited
-          - suspended
-          - deleted
-          default: active
-        managerId:
-          type: string
-          nullable: true
-        orgUnitId:
-          type: string
-          nullable: true
-        attributes:
-          type: object
-          additionalProperties: true
-        avatarUrl:
-          type: string
-          format: uri
-          nullable: true
-        createdAt:
-          type: string
-          format: date-time
-      required:
-      - id
-      - email
-      - name
-      - status
+        id: { type: string }
+        email: { type: string, format: email }
+        name: { type: string }
+        phone: { type: string, nullable: true }
+        locale: { type: string, default: "ru-RU" }
+        tz: { type: string, default: "Europe/Moscow" }
+        status: { type: string, enum: [active, invited, suspended, deleted], default: active }
+        managerId: { type: string, nullable: true }
+        orgUnitId: { type: string, nullable: true }
+        attributes: { type: object, additionalProperties: true }
+        avatarUrl: { type: string, format: uri, nullable: true }
+        createdAt: { type: string, format: date-time }
+      required: [id, email, name, status]
+
+    UserCreate:
+      type: object
+      properties:
+        email: { type: string, format: email }
+        name: { type: string }
+        phone: { type: string, nullable: true }
+        locale: { type: string }
+        tz: { type: string }
+        managerId: { type: string, nullable: true }
+        orgUnitId: { type: string, nullable: true }
+        attributes: { type: object, additionalProperties: true }
+      required: [email, name]
+
+    UserPatch:
+      type: object
+      properties:
+        name: { type: string }
+        phone: { type: string, nullable: true }
+        locale: { type: string }
+        tz: { type: string }
+        managerId: { type: string, nullable: true }
+        orgUnitId: { type: string, nullable: true }
+        attributes: { type: object, additionalProperties: true }
+
     UserPage:
       type: object
       properties:
@@ -322,91 +410,61 @@ components:
         nextCursor:
           type: string
           nullable: true
-    UserPatch:
-      type: object
-      properties:
-        name:
-          type: string
-        phone:
-          type: string
-          nullable: true
-        locale:
-          type: string
-        tz:
-          type: string
-        managerId:
-          type: string
-          nullable: true
-        orgUnitId:
-          type: string
-          nullable: true
-        attributes:
-          type: object
-          additionalProperties: true
-    FilePresignResponse:
-      type: object
-      properties:
-        uploadUrl:
-          type: string
-          format: uri
-        fileUrl:
-          type: string
-          format: uri
-      required:
-      - uploadUrl
-      - fileUrl
-    UserCreate:
-      type: object
-      properties:
-        email:
-          type: string
-          format: email
-        name:
-          type: string
-        phone:
-          type: string
-          nullable: true
-        locale:
-          type: string
-        tz:
-          type: string
-        managerId:
-          type: string
-          nullable: true
-        orgUnitId:
-          type: string
-          nullable: true
-        attributes:
-          type: object
-          additionalProperties: true
-      required:
-      - email
-      - name
+
     Group:
       type: object
       properties:
-        id:
-          type: string
-        name:
-          type: string
-        description:
-          type: string
-          nullable: true
-        memberCount:
-          type: integer
-        createdAt:
-          type: string
-          format: date-time
-      required:
-      - id
-      - name
+        id: { type: string }
+        name: { type: string }
+        description: { type: string, nullable: true }
+        memberCount: { type: integer }
+        createdAt: { type: string, format: date-time }
+      required: [id, name]
+
     GroupCreate:
       type: object
       properties:
-        name:
-          type: string
-        description:
-          type: string
-          nullable: true
-      required:
-      - name
+        name: { type: string }
+        description: { type: string, nullable: true }
+      required: [name]
+
+    OrgUnit:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        parentId: { type: string, nullable: true }
+        path: { type: string }
+        attributes: { type: object, additionalProperties: true }
+        createdAt: { type: string, format: date-time }
+      required: [id, name]
+
+    OrgUnitCreate:
+      type: object
+      properties:
+        name: { type: string }
+        parentId: { type: string, nullable: true }
+        attributes: { type: object, additionalProperties: true }
+      required: [name]
+
+    OrgUnitPatch:
+      type: object
+      properties:
+        name: { type: string }
+        parentId: { type: string, nullable: true }
+        attributes: { type: object, additionalProperties: true }
+
+    FilePresignRequest:
+      type: object
+      properties:
+        fileName: { type: string }
+        contentType: { type: string }
+        size: { type: integer }
+      required: [fileName, contentType, size]
+
+    FilePresignResponse:
+      type: object
+      properties:
+        uploadUrl: { type: string, format: uri }
+        fileUrl: { type: string, format: uri }
+      required: [uploadUrl, fileUrl]

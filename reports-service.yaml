@@ -1,8 +1,621 @@
 openapi: 3.0.3
 info:
-  title: reports-service API
+  title: Planora Reports Service API
   version: 1.0.0
-  description: OpenAPI спецификация для reports-service
-paths: {}
+  description: API для управления отчётами: источники данных, датасеты, шаблоны и генерация.
+servers:
+  - url: https://api.planora.local/api
+tags:
+  - name: DataSources
+    description: Источники данных для отчётов
+  - name: DataSets
+    description: Наборы данных
+  - name: Templates
+    description: Шаблоны отчётов
+  - name: Reports
+    description: Генерация отчётов
+
+paths:
+  /report-datasources:
+    get:
+      tags: [DataSources]
+      summary: Список источников данных
+      parameters:
+        - name: q
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DataSource'
+    post:
+      tags: [DataSources]
+      summary: Создать источник данных
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataSourceCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataSource'
+
+  /report-datasources/{id}:
+    get:
+      tags: [DataSources]
+      summary: Получить источник
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataSource'
+    patch:
+      tags: [DataSources]
+      summary: Обновить источник
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataSourcePatch'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataSource'
+    delete:
+      tags: [DataSources]
+      summary: Удалить источник
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: No Content
+
+  /report-datasources/{id}/test:
+    post:
+      tags: [DataSources]
+      summary: Проверить соединение/доступ
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+
+  /report-datasets:
+    get:
+      tags: [DataSets]
+      summary: Список датасетов
+      parameters:
+        - name: q
+          in: query
+          schema:
+            type: string
+        - name: dataSourceId
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DataSet'
+    post:
+      tags: [DataSets]
+      summary: Создать датасет
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataSetCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataSet'
+
+  /report-datasets/{id}:
+    get:
+      tags: [DataSets]
+      summary: Получить датасет
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataSet'
+    patch:
+      tags: [DataSets]
+      summary: Обновить датасет
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataSetPatch'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataSet'
+    delete:
+      tags: [DataSets]
+      summary: Удалить датасет
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: No Content
+
+  /report-datasets/{id}/preview:
+    post:
+      tags: [DataSets]
+      summary: Предпросмотр выборки (с параметрами)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataSetPreviewRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {}
+
+  /report-templates:
+    get:
+      tags: [Templates]
+      summary: Список шаблонов
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReportTemplate'
+    post:
+      tags: [Templates]
+      summary: Создать шаблон
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportTemplateCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportTemplate'
+
+  /report-templates/{id}:
+    get:
+      tags: [Templates]
+      summary: Получить шаблон
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportTemplate'
+    patch:
+      tags: [Templates]
+      summary: Обновить метаданные/биндинги шаблона
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportTemplatePatch'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportTemplate'
+    delete:
+      tags: [Templates]
+      summary: Удалить шаблон
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: No Content
+
+  /report-templates/{id}/versions:
+    post:
+      tags: [Templates]
+      summary: Загрузить новую версию файла шаблона
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                changeLog:
+                  type: string
+                  nullable: true
+              required: [file]
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateVersion'
+
+  /report-templates/{id}/preview:
+    post:
+      tags: [Templates]
+      summary: Предпросмотр рендера (PDF/XLS/DOCX)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportRenderRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+
+  /report-jobs:
+    get:
+      tags: [Reports]
+      summary: Список джобов отчётов
+      parameters:
+        - name: templateId
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [queued, running, done, failed]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReportJob'
+    post:
+      tags: [Reports]
+      summary: Запустить генерацию отчёта
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                templateId:
+                  type: string
+                params:
+                  type: object
+                  additionalProperties: true
+                format:
+                  type: string
+                  enum: [pdf, xlsx, docx, html, csv]
+                  default: pdf
+              required: [templateId]
+      responses:
+        '202':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportJob'
+
+  /report-jobs/{id}:
+    get:
+      tags: [Reports]
+      summary: Получить статус джоба
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportJob'
+
+  /report-jobs/{id}/download:
+    get:
+      tags: [Reports]
+      summary: Скачать отчёт
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: File
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+            application/vnd.openxmlformats-officedocument.wordprocessingml.document:
+              schema:
+                type: string
+                format: binary
+
 components:
-  schemas: {}
+  schemas:
+    DataSource:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        kind: { type: string, enum: [sql, rest] }
+        sql: { type: string, nullable: true }
+        rest:
+          type: object
+          nullable: true
+          properties:
+            method: { type: string, enum: [GET, POST] }
+            path: { type: string }
+            query: { type: object, additionalProperties: true }
+            body: { type: object, additionalProperties: true }
+        transform: { type: object, additionalProperties: true }
+        paramsSchema: { type: object }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      required: [id, name, kind]
+
+    DataSourceCreate:
+      type: object
+      properties:
+        name: { type: string }
+        kind: { type: string, enum: [sql, rest] }
+        sql: { type: string, nullable: true }
+        rest:
+          type: object
+          nullable: true
+          properties:
+            method: { type: string, enum: [GET, POST] }
+            path: { type: string }
+            query: { type: object, additionalProperties: true }
+            body: { type: object, additionalProperties: true }
+        transform: { type: object, additionalProperties: true }
+        paramsSchema: { type: object }
+      required: [name, kind]
+
+    DataSourcePatch:
+      type: object
+      properties:
+        name: { type: string }
+        sql: { type: string, nullable: true }
+        rest:
+          type: object
+          nullable: true
+          properties:
+            method: { type: string, enum: [GET, POST] }
+            path: { type: string }
+            query: { type: object, additionalProperties: true }
+            body: { type: object, additionalProperties: true }
+        transform: { type: object, additionalProperties: true }
+        paramsSchema: { type: object }
+
+    DataSet:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        dataSourceId: { type: string }
+        query: { type: string }
+        paramsSchema: { type: object, nullable: true }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      required: [id, name, dataSourceId, query]
+
+    DataSetCreate:
+      type: object
+      properties:
+        name: { type: string }
+        dataSourceId: { type: string }
+        query: { type: string }
+        paramsSchema: { type: object, nullable: true }
+      required: [name, dataSourceId, query]
+
+    DataSetPatch:
+      type: object
+      properties:
+        name: { type: string }
+        query: { type: string }
+        paramsSchema: { type: object, nullable: true }
+
+    DataSetPreviewRequest:
+      type: object
+      properties:
+        params: { type: object, additionalProperties: true }
+      required: [params]
+
+    ReportTemplate:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        kind: { type: string, enum: [jasper, poi_xlsx, poi_docx] }
+        datasetId: { type: string, nullable: true }
+        paramsSchema: { type: object, nullable: true }
+        currentVersionId: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      required: [id, name, kind]
+
+    ReportTemplateCreate:
+      type: object
+      properties:
+        name: { type: string }
+        kind: { type: string, enum: [jasper, poi_xlsx, poi_docx] }
+        datasetId: { type: string, nullable: true }
+        paramsSchema: { type: object, nullable: true }
+      required: [name, kind]
+
+    ReportTemplatePatch:
+      type: object
+      properties:
+        name: { type: string }
+        datasetId: { type: string, nullable: true }
+        paramsSchema: { type: object, nullable: true }
+
+    TemplateVersion:
+      type: object
+      properties:
+        id: { type: string }
+        templateId: { type: string }
+        version: { type: integer }
+        changeLog: { type: string, nullable: true }
+        storageUrl: { type: string, format: uri }
+        uploadedAt: { type: string, format: date-time }
+      required: [id, templateId, version, storageUrl, uploadedAt]
+
+    ReportRenderRequest:
+      type: object
+      properties:
+        params: { type: object, additionalProperties: true }
+        format: { type: string, enum: [pdf, xlsx, docx], default: pdf }
+      required: [params]
+
+    ReportJob:
+      type: object
+      properties:
+        id: { type: string }
+        templateId: { type: string }
+        status: { type: string, enum: [queued, running, done, failed] }
+        format: { type: string }
+        params: { type: object, additionalProperties: true }
+        error: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+        startedAt: { type: string, format: date-time, nullable: true }
+        finishedAt: { type: string, format: date-time, nullable: true }
+      required: [id, templateId, status, format, createdAt]
